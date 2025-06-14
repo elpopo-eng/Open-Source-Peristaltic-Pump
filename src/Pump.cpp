@@ -30,8 +30,8 @@ U8X8_SH1106_128X64_NONAME_HW_I2C lcd(U8X8_PIN_NONE);
 
 // ENCODER --------------------------------------------------------------------------------
 #define ENCODER_PIN_BUTTON 7
-#define ENCODER_PIN_A 8
-#define ENCODER_PIN_B 9
+#define ENCODER_PIN_A 9
+#define ENCODER_PIN_B 8
 ClickEncoder *encoder;
 int16_t last, value;
 
@@ -610,13 +610,15 @@ long delay_us_calc(long vol_per_min, int unit_mode, int calibr, int decimals)
 
 void update_lcd()
 {
-    lcd.clear();
+    //lcd.clear();
+    lcd.clearDisplay();
     // first line LCD ------------------------------------
     lcd_setcursor(0, 0);
     lcd.inverse();
     lcd.print(menu_number_1);
     lcd.print("|");
     lcd.print(menu[menu_number_1].name_);
+    lcd_setcursor(0, 1);
     if (menu[menu_number_1].type == menu_type::VALUE)
     { // if value type
         value_dbl = menu[menu_number_1].value;
@@ -636,11 +638,12 @@ void update_lcd()
     }
 
     // second line LCD ------------------------------------
-    lcd_setcursor(0, 1);
+    lcd_setcursor(0, 2);
     lcd.noInverse();
     lcd.print(menu_number_2);
     lcd.print("|");
     lcd.print(menu[menu_number_2].name_);
+    lcd_setcursor(0, 3);
     if (menu[menu_number_2].type == menu_type::VALUE)
     { // if value type
         value_dbl = menu[menu_number_2].value;
@@ -659,7 +662,7 @@ void update_lcd()
     { // if action type
     }
 
-    lcd_setcursor(1, 0);
+    //lcd_setcursor(1, 0);
 }
 //_____________________________________________________________________________________________
 
