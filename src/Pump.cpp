@@ -202,6 +202,8 @@ void setup()
     {
         menu[1].decimals = 1;
     }
+
+    menu[3].suffix = menu[4].options[menu[4].value];
     if (menu[3].suffix == "uL/min")
     {
         menu[3].decimals = 0;
@@ -210,7 +212,7 @@ void setup()
     {
         menu[3].decimals = 1;
     }
-    menu[3].suffix = menu[4].options[menu[4].value];
+    
     update_lcd();
     steps = steps_calc(menu[1].value, menu[2].value, menu[7].value, menu[1].decimals);
     delay_us = delay_us_calc(menu[3].value, menu[4].value, menu[7].value, menu[3].decimals);
@@ -230,6 +232,7 @@ void loop()
             if (menu[menu_number_1].type == VALUE || menu[menu_number_1].type == OPTION)
             { // if value or option type
                 in_menu = !in_menu;
+                update_lcd();
             }
             if (menu[menu_number_1].type == ACTION)
             { // if action type
@@ -274,9 +277,60 @@ void loop()
         // lcd1.blink();
         if (menu[menu_number_1].type == ACTION)
         {
-            lcd_setcursor((LCD_COLUMNS - strlen(menu[menu_number_1].suffix)), 0);
-            lcd.print(menu[menu_number_1].suffix);
-            lcd_setcursor(15, 0);
+            lcd.clearDisplay();
+            lcd_setcursor(0,0);
+            if(menu_number_1 != 0)
+            {
+                lcd.print(menu[menu_number_1].name_);
+                lcd.print(" ");
+                lcd.print(menu[menu_number_1].suffix);                
+            }
+            else
+            {
+                lcd.print(menu[menu_number_1].suffix);
+                lcd_setcursor(0,1);
+                lcd.print(menu[6].options[menu[6].value]);
+
+                if (menu[6].value == 0)
+                { // Dose
+                    lcd_setcursor(0,2);
+                    // volume
+                    lcd.print("V ");
+                    value_dbl = menu[1].value;
+                    value_dbl = value_dbl / pow(10, menu[1].decimals);
+                    dtostrf(value_dbl, VALUE_MAX_DIGITS, menu[1].decimals, value_str);
+                    lcd.print(value_str);
+                    lcd.print(" ");
+                    lcd.print(menu[1].suffix);
+                    // speed
+                    lcd_setcursor(0,3);
+                    lcd.print("S ");
+                    value_dbl = menu[3].value;
+                    value_dbl = value_dbl / pow(10, menu[3].decimals);
+                    dtostrf(value_dbl, VALUE_MAX_DIGITS, menu[3].decimals, value_str);
+                    lcd.print(value_str);
+                    lcd.print(" ");
+                    lcd.print(menu[3].suffix);
+                }
+                else if (menu[6].value == 1)
+                { // Pump
+                    // pump speed
+                    lcd_setcursor(0,2);
+                    lcd.print("S ");
+                    value_dbl = menu[3].value;
+                    value_dbl = value_dbl / pow(10, menu[3].decimals);
+                    dtostrf(value_dbl, VALUE_MAX_DIGITS, menu[3].decimals, value_str);
+                    lcd.print(value_str);
+                    lcd.print(" ");
+                    lcd.print(menu[3].suffix);
+                }
+                else if (menu[6].value == 2)
+                { // Cal.
+
+                }
+  
+            }
+
         }
         if (menu[menu_number_1].type == VALUE)
         {
@@ -402,7 +456,7 @@ void loop()
         if (val_change == true)
         {
             update_lcd();
-            val_change == false;
+            val_change = false;
         }
 
         value += encoder->getValue(); // encoder update
@@ -537,8 +591,7 @@ void pump(int _delay_us)
 void exit_action_menu()
 {
     in_action = false;
-    lcd_setcursor((LCD_COLUMNS - strlen(menu[menu_number_1].suffix)), 0);
-    lcd.print("          ");
+    update_lcd();
     // lcd1.noBlink();
 }
 //_____________________________________________________________________________________________
@@ -570,6 +623,8 @@ long steps_calc(long volume, int unit_mode, int calibr, int decimals)
     }
 
     _steps = STEPS_PER_FULL_ROT * STEP_MODE * conv * volume / decimal_corr;
+    Serial.print("Steps : ");
+    Serial.println(_steps);
     return _steps;
 }
 //_____________________________________________________________________________________________
@@ -603,6 +658,9 @@ long delay_us_calc(long vol_per_min, int unit_mode, int calibr, int decimals)
 
     d_delay_us = (1 / (STEPS_PER_FULL_ROT * STEP_MODE * conv * vol_per_min / decimal_corr)) * 60 * MICROSEC_PER_SEC / 2;
     _delay_us = d_delay_us;
+    Serial.print("Delay : ");
+    Serial.println(_delay_us);
+
     return _delay_us;
 }
 
@@ -614,11 +672,17 @@ void update_lcd()
     lcd.clearDisplay();
     // first line LCD ------------------------------------
     lcd_setcursor(0, 0);
-    lcd.inverse();
+    if(!in_menu)
+        lcd.inverse();
+    else
+        lcd.noInverse();
+
     lcd.print(menu_number_1);
     lcd.print("|");
     lcd.print(menu[menu_number_1].name_);
     lcd_setcursor(0, 1);
+    lcd.inverse();
+
     if (menu[menu_number_1].type == menu_type::VALUE)
     { // if value type
         value_dbl = menu[menu_number_1].value;
